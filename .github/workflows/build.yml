@@ -1,0 +1,42 @@
+name: Build Smile Fingerprint APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract Android project
+        run: |
+          mkdir source
+          unzip -o *.zip -d source
+          find source -name gradlew -exec dirname {} \; | head -1 > project_path.txt
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        run: |
+          cd "$(cat project_path.txt)"
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Smile-Fingerprint-APK
+          path: source/**/build/outputs/apk/**/*.apk
