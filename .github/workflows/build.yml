@@ -11,14 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Extract Android project
-        run: |
-          mkdir source
-          unzip -o *.zip -d source
-          find source -name gradlew -exec dirname {} \; | head -1 > project_path.txt
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -29,9 +23,19 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Extract Android project
+        run: |
+          mkdir project
+          unzip -q OnePlusEmojiFpAnim-Android15-SDK35.zip -d project
+
       - name: Build APK
         run: |
-          cd "$(cat project_path.txt)"
+          GRADLEW=$(find project -name gradlew -type f | head -n 1)
+          if [ -z "$GRADLEW" ]; then
+            echo "Gradle wrapper not found"
+            exit 1
+          fi
+          cd "$(dirname "$GRADLEW")"
           chmod +x gradlew
           ./gradlew assembleDebug
 
@@ -39,4 +43,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Smile-Fingerprint-APK
-          path: source/**/build/outputs/apk/**/*.apk
+          path: project/**/build/outputs/apk/**/*.apk
